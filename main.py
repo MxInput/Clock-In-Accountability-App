@@ -29,6 +29,9 @@ past_window = None
 today_tasks=[]
 today_times = []
 
+past_times = []
+past_tasks = []
+
 def initialize_data():
     file_name = 'data.csv'
     found_file = os.path.exists(file_name)
@@ -53,6 +56,9 @@ def read_data():
             if datetime.strptime(line['datetime'], format).date() == datetime.today().date():
                 today_tasks.insert(-1, line['entry'])
                 today_times.insert(-1, datetime.strptime(line['datetime'], format))
+            else:
+                past_tasks.insert(-1, line['entry'])
+                past_times.insert(-1, datetime.strptime(line['datetime'], format))
 
 initialize_data()
 
@@ -124,14 +130,22 @@ def open_today_menu():
     tree_view.heading("1", text="Time")
     tree_view.heading("2", text="Entry")
 
+    if len(today_tasks) > 0:
+        for x in range(len(today_tasks)+1):
+            count = "L" + str(x+1)
 
-    for x in range(len(today_tasks)):
-        count = "L" + str(x+1)
+            tree_view.insert("", END, text=count,
+                values=(today_times[x-1].strftime('%H:%M:%S %p'), today_tasks[x-1]))
 
-        tree_view.insert("", x+1, text=count,
-            values=(today_times[x].strftime('%H:%M:%S %p'), today_tasks[x]))
+        selected_item = tree_view.get_children()[-1]
+        tree_view.delete(selected_item)
 
+    def handle_click(event):
+        if tree_view.identify_region(event.x, event.y) == "separator":
+            return "break"
+        
     tree_view.bind('<B1-Motion>', partial(motion_handler, tree_view))
+    tree_view.bind('<Button-1>', handle_click)
     motion_handler(tree_view, None)   
 
 def close_past_menu():
@@ -150,6 +164,45 @@ def open_past_menu():
         past_window.protocol("WM_DELETE_WINDOW", close_past_menu)
 
         Label(past_window, text="Past Entries", font=("Segoe UI Semibold", 40)).pack(pady=20)
+    
+    tree_view = ttk.Treeview(past_window, height=5,style="style.Treeview", selectmode="none")
+    tree_view.pack(side='left', expand=True, fill=BOTH, padx=(117,100), pady=(0,24))
+
+    verscrlbar = ttk.Scrollbar(past_window,
+                               orient='vertical',
+                               command = tree_view.yview)
+    
+    verscrlbar.pack(side="right", fill='x')
+    tree_view.configure(xscrollcommand=verscrlbar.set)
+    
+    tree_view["columns"] = ("1", "2", "3")
+    tree_view['show'] = 'headings'
+
+    tree_view.column("1", width = 150, anchor ='c')
+    tree_view.column("2", width = 150, anchor ='c')
+    tree_view.column("3", width = 600, anchor ='nw')
+
+    tree_view.heading("1", text="Date")
+    tree_view.heading("2", text="Time")
+    tree_view.heading("3", text="Entry")
+
+    if len(past_times) > 0:
+        for x in range(len(past_times)+1):
+            count = "L" + str(x+1)
+
+            tree_view.insert("", END, text=count,
+                values=(past_times[x-1].strftime('%m/%d/%Y'), past_times[x-1].strftime('%H:%M:%S %p'), past_tasks[x-1]))
+
+        selected_item = tree_view.get_children()[-1]
+        tree_view.delete(selected_item)
+
+    def handle_click(event):
+        if tree_view.identify_region(event.x, event.y) == "separator":
+            return "break"
+        
+    tree_view.bind('<B1-Motion>', partial(motion_handler, tree_view))
+    tree_view.bind('<Button-1>', handle_click)
+    motion_handler(tree_view, None)  
 
 def add_task():
     task = task_entry.get("1.0", "end-1c")
@@ -195,6 +248,9 @@ def time():
 
     if today_times:
         if today_times[-1].strftime("%Y-%m-%d") != datetime.now().strftime("%Y-%m-%d"):
+            for x in range(len(today_times)):
+                past_times.append(today_times[x])
+                past_tasks.append(today_tasks[x])
             today_times.clear()
             today_tasks.clear()
     clock.after(1000, time)
