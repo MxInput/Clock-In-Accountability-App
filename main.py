@@ -88,7 +88,6 @@ def motion_handler(tree, event):
             tree.item(iid, values=new_vals)
 
 
-
 def close_today_menu():
     global today_window
 
@@ -107,7 +106,7 @@ def open_today_menu():
         Label(today_window, text="Today's Entries", font=("Segoe UI Semibold", 40)).pack(pady=20)
     
     tree_view = ttk.Treeview(today_window, height=5,style="style.Treeview", selectmode="none")
-    tree_view.pack(side='left', expand=True, fill=BOTH, padx=(22,5), pady=(0,24))
+    tree_view.pack(side='left', expand=True, fill=BOTH, padx=(117,100), pady=(0,24))
 
     verscrlbar = ttk.Scrollbar(today_window,
                                orient='vertical',
@@ -115,20 +114,22 @@ def open_today_menu():
     
     verscrlbar.pack(side="right", fill='x')
     tree_view.configure(xscrollcommand=verscrlbar.set)
-   
+    
     tree_view["columns"] = ("1", "2")
     tree_view['show'] = 'headings'
 
     tree_view.column("1", width = 200, anchor ='c')
-    tree_view.column("2", width = 700, anchor ='c')
+    tree_view.column("2", width = 700, anchor ='nw')
 
     tree_view.heading("1", text="Time")
     tree_view.heading("2", text="Entry")
 
+
     for x in range(len(today_tasks)):
         count = "L" + str(x+1)
-        tree_view.insert("", END, text=count,
-                         values=(today_times[x].strftime('%H:%M:%S %p'), today_tasks[x]))
+
+        tree_view.insert("", x+1, text=count,
+            values=(today_times[x].strftime('%H:%M:%S %p'), today_tasks[x]))
 
     tree_view.bind('<B1-Motion>', partial(motion_handler, tree_view))
     motion_handler(tree_view, None)   
@@ -191,6 +192,11 @@ def check():
 def time():
     string = strftime('%H:%M:%S %p')
     clock.config(text=string)
+
+    if today_times:
+        if today_times[-1].strftime("%Y-%m-%d") != datetime.now().strftime("%Y-%m-%d"):
+            today_times.clear()
+            today_tasks.clear()
     clock.after(1000, time)
     clock.after(1000, check)
 
