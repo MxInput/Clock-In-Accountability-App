@@ -1,6 +1,8 @@
 from time import strftime
 from datetime import datetime, timedelta
 
+import csv
+
 import math
 
 import tkinter as tk
@@ -15,10 +17,19 @@ root.title("Clock In: Accountability App")
 root.geometry('1000x600')
 
 today_window = None
+past_window = None
 
 previous_tasks=[]
 today_tasks=[]
 today_times = []
+
+def read_data():
+    with open('data.csv', mode='r') as file:
+        csv_file = csv.DictReader(file)
+        for lines in csv_file:
+            print(lines)
+
+read_data()
 
 def close_today_menu():
     global today_window
@@ -32,10 +43,27 @@ def open_today_menu():
     if today_window is None:
         today_window = tk.Toplevel(root)
         today_window.title("Today's Entries")
-        today_window.geometry("250x150")
+        today_window.geometry("1000x600")
         today_window.protocol("WM_DELETE_WINDOW", close_today_menu)
 
-        Label(today_window, text="Today's Entries", font=("Segoe UI", 11)).pack(pady=20)
+        Label(today_window, text="Today's Entries", font=("Segoe UI Semibold", 40)).pack(pady=20)
+
+def close_past_menu():
+    global past_window
+
+    past_window.destroy()
+    past_window = None
+
+def open_past_menu():
+    global past_window
+
+    if past_window is None:
+        past_window = tk.Toplevel(root)
+        past_window.title("Past Entries")
+        past_window.geometry("1000x600")
+        past_window.protocol("WM_DELETE_WINDOW", close_past_menu)
+
+        Label(past_window, text="Past Entries", font=("Segoe UI Semibold", 40)).pack(pady=20)
 
 def add_task():
     task = task_entry.get("1.0", "end-1c")
@@ -45,6 +73,10 @@ def add_task():
             today_tasks.append(task)
             task_entry.delete("1.0", "end")
             text_count.config(text="0 / 300")
+            with open('data.csv', 'a', newline='') as csv_file:
+                csv_writer = csv.writer(csv_file)
+        
+                csv_writer.writerow([datetime.now(), task])
         else:
             messagebox.showwarning("Warning", "Come back later!")  
     else:
@@ -120,13 +152,13 @@ text_count = Label(root, text="0 / 300", font=("Segoe UI", 8))
 text_count.pack(anchor="center")
 
 # submit button
-add_button = tk.Button(root, text="ADD", command=add_task, font=("Segoe UI", 20))
-add_button.pack()
+add_button = tk.Button(root, text="ADD", command=add_task, font=("Segoe UI", 20), relief="solid",borderwidth=4)
+add_button.pack(side=LEFT, padx=10, expand=True, fill=X)
 
-previous_btn = tk.Button(root, text="VIEW TODAY'S ENTRIES", command=open_today_menu, font=("Segoe UI", 20))
-previous_btn.pack()
+today_btn = tk.Button(root, text="VIEW TODAY'S ENTRIES", command=open_today_menu, font=("Segoe UI", 20), relief="solid",borderwidth=4)
+today_btn.pack(side=LEFT, padx=20, expand=True, fill=X)
 
-previous_btn = tk.Button(root, text="VIEW PAST DAYS", command=add_task, font=("Segoe UI", 20))
-previous_btn.pack()
+previous_btn = tk.Button(root, text="VIEW PAST DAYS", command=open_past_menu, font=("Segoe UI", 20), relief="solid",borderwidth=4)
+previous_btn.pack(side=LEFT, padx=10, expand=True, fill=X)
 
 root.mainloop()
