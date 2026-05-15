@@ -7,12 +7,11 @@ import os
 import math
 
 import tkinter as tk
-import tkinter.font
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from tkinter.ttk import *
-from tkinter import messagebox
-
+from functools import partial
+from tkinter.font import Font
 
 # main window
 root = tk.Tk()
@@ -20,7 +19,7 @@ root.title("Clock In: Accountability App")
 root.geometry('1000x600')
 
 style = ttk.Style()
-style.configure("style.Treeview", wraplength=10, highlightthickness=0, bd=0, font=('"Segoe UI', 12))
+style.configure("style.Treeview", rowheight=100, wraplength=10, highlightthickness=0, bd=0, font=('"Segoe UI', 12))
 style.configure("style.Treeview.Heading", font=('Segoe UI', 16,'bold')) # Modify the font of the headings
 style.layout("style.Treeview", [('style.Treeview.treearea', {'sticky': 'nswe'})])
 
@@ -57,6 +56,39 @@ def read_data():
 
 initialize_data()
 
+def motion_handler(tree, event):
+    f = Font(font=('Segoe UI', 16))
+    # A helper function that will wrap a given value based on column width
+    def adjust_newlines(val, width, pad=0):
+        if not isinstance(val, str):
+            return val
+        else:
+            words = val.split()
+            lines = [[],]
+            for word in words:
+                line = lines[-1] + [word,]
+                if f.measure(' '.join(line)) < (width - pad):
+                    lines[-1].append(word)
+                else:
+                    lines[-1] = ' '.join(lines[-1])
+                    lines.append([word,])
+
+            if isinstance(lines[-1], list):
+                lines[-1] = ' '.join(lines[-1])
+
+            return '\n'.join(lines)
+
+    if (event is None) or (tree.identify_region(event.x, event.y) == "separator"):
+        col_widths = [tree.column(cid)['width'] for cid in tree['columns']]
+
+        for iid in tree.get_children():
+            new_vals = []
+            for (v,w) in zip(tree.item(iid)['values'], col_widths):
+                new_vals.append(adjust_newlines(v, w))
+            tree.item(iid, values=new_vals)
+
+
+
 def close_today_menu():
     global today_window
 
@@ -74,7 +106,7 @@ def open_today_menu():
 
         Label(today_window, text="Today's Entries", font=("Segoe UI Semibold", 40)).pack(pady=20)
     
-    tree_view = ttk.Treeview(today_window, style="style.Treeview", selectmode="browse")
+    tree_view = ttk.Treeview(today_window, height=5,style="style.Treeview", selectmode="none")
     tree_view.pack(side='left', expand=True, fill=BOTH, padx=(22,5), pady=(0,24))
 
     verscrlbar = ttk.Scrollbar(today_window,
@@ -87,16 +119,19 @@ def open_today_menu():
     tree_view["columns"] = ("1", "2")
     tree_view['show'] = 'headings'
 
-    tree_view.column("1", width = 90, anchor ='c')
-    tree_view.column("2", width = 90, anchor ='c')
+    tree_view.column("1", width = 200, anchor ='c')
+    tree_view.column("2", width = 700, anchor ='c')
 
     tree_view.heading("1", text="Time")
     tree_view.heading("2", text="Entry")
 
-
     for x in range(len(today_tasks)):
-        tree_view.insert("", END, text="L1",
+        count = "L" + str(x+1)
+        tree_view.insert("", END, text=count,
                          values=(today_times[x].strftime('%H:%M:%S %p'), today_tasks[x]))
+
+    tree_view.bind('<B1-Motion>', partial(motion_handler, tree_view))
+    motion_handler(tree_view, None)   
 
 def close_past_menu():
     global past_window
