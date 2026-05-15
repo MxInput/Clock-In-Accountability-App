@@ -2,6 +2,7 @@ from time import strftime
 from datetime import datetime, timedelta
 
 import csv
+import os
 
 import math
 
@@ -23,13 +24,26 @@ previous_tasks=[]
 today_tasks=[]
 today_times = []
 
+def initialize_data():
+    file_name = 'data.csv'
+    found_file = os.path.exists(file_name)
+
+    field_names = ['datetime', 'entry']
+
+    with open(file_name, mode='w') as file:
+        writer = csv.DictWriter(file, field_names)
+        if not found_file:
+
+            writer.writeheader()
+    file.close()
+
 def read_data():
     with open('data.csv', mode='r') as file:
         csv_file = csv.DictReader(file)
         for lines in csv_file:
             print(lines)
 
-read_data()
+initialize_data()
 
 def close_today_menu():
     global today_window
@@ -74,9 +88,16 @@ def add_task():
             task_entry.delete("1.0", "end")
             text_count.config(text="0 / 300")
             with open('data.csv', 'a', newline='') as csv_file:
-                csv_writer = csv.writer(csv_file)
-        
-                csv_writer.writerow([datetime.now(), task])
+                field_names = ['datetime', 'entry']
+                csv_writer = csv.DictWriter(csv_file, fieldnames=field_names)
+
+                keys = ['datetime', 'entry']
+                values = [datetime.now(), task]
+                d = {k: v for k, v in zip(keys, values)}
+
+                csv_writer.writerow(d)
+            csv_file.close()
+                
         else:
             messagebox.showwarning("Warning", "Come back later!")  
     else:
