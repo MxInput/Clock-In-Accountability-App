@@ -4,6 +4,8 @@ An accountability app that asks the user to check in every hour with what they d
 
 <img width="662" height="388" alt="clock_in_capture" src="https://github.com/user-attachments/assets/1e1c996c-826f-4b32-aaa6-85c3ef3e5146" />
 
+### Video Demonstration
+https://github.com/user-attachments/assets/e619de67-2d15-4f46-ac66-a25b2b6bfcd6
 
 ### Features
 - Acts as a diary to write in what you've done for the past hour.
